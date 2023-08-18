@@ -5,14 +5,16 @@
  *      Author: ENG.AbdelrhmanEslam
  */
 
-#include "../../LIB/STD_TYPES.h"
-#include "../../MCAL/DIO/DIO.h"
-#include "util/delay.h"
+
 #include "KPD_int.h"
 
 
-static const u8 GKPD_KEYS[16]={'1','4','7','c','2','5','8','0','3','6','9','=','/','*','-','+'};
-
+u8 G_u8Grid[4][4]={
+		{'7','8','9','/'},
+		{'4','5','6','*'},
+		{'1','2','3','-'},
+		{'c','0','=','+'}
+};
 void HKPD_voidInit(){
 
 	MDIO_voidSetPortDirection(KPD_PORT, 0x0f);
@@ -22,22 +24,23 @@ void HKPD_voidInit(){
 
 u8 HKPD_u8GetPressedKey(){
 
-	u8 Pressed_Key = 20;
+	u8 L_u8PressedKey;
+			for(u8 col=0; col<ColNumber; col++)
+			{
+				MDIO_voidSetPinValue(G_u8PortNum,col,LOW);
+				for(u8 row=0; row<RowNumber; row++)
+				{
+					if(MDIO_u8GetPinValue(G_u8PortNum,row+ColNumber)==LOW)
+					{
+						L_u8PressedKey=G_u8Grid[row][col];
+					}
+					while(MDIO_u8GetPinValue(G_u8PortNum,row+ColNumber)==LOW) {}
+					_delay_ms(10);
 
-	for (u8 col=0; col<4; col++){
-		/*activate current column*/
-
-		MDIO_voidSetPinValue(KPD_PORT, col, LOW);
-
-		for(u8 row=0; row<4; row++){
-			if(MDIO_U8GetPinValue(KPD_PORT,row+4) == 0){
-				Pressed_Key= row+ (col*4) + 1 ;
+				}
+				MDIO_voidSetPinValue(G_u8PortNum,col,HIGH);
 			}
-			while(MDIO_U8GetPinValue(KPD_PORT, row+4) == 0){}
-			_delay_ms(10);
-		}
-		MDIO_voidSetPinValue(KPD_PORT, col, HIGH);
-	}
+			return L_u8PressedKey;	}
 
-	return GKPD_KEYS[Pressed_Key];	}
+
 
